@@ -204,9 +204,17 @@ String shortenDest(String input, int mgl) { //Bahnhofsnamen kürzen
       reg += "%s";
       Serial.println(reg.c_str());
       ms.GlobalReplace(reg.c_str(), " "); //          //Erstes Wort kürzen
-
-
-    }
+ }
+     res = ms.Match(".+%-.+");		//enthält mehrere Wörter mit Bindestrich?
+    if (res) {						//vom ersten Wort die überstehenden Zeichen wegnehmen (regexp.h kann keine {}-Quantifier
+      String reg = "";
+      for (int r = 0; r < cut; r++) {
+        reg += "[a-z]";
+      }
+      reg += "%-";
+      Serial.println(reg.c_str());
+      ms.GlobalReplace(reg.c_str(), "-"); //          //Erstes Wort kürzen
+ }
     input = ipt;
     input = input.substring(0, mgl);
     return input;
