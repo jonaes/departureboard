@@ -49,9 +49,9 @@ Bibliotheken:
 TODO: Hier noch Bilder hin
 
 ## Bekannte Probleme
-* von Zeit zu Zeit läuft etwas mit dem Countdown schief (muss ich mir mal anschauen, warum)
+* Immer mal wird eine falsche Stundenzahl für die aktuelle Uhrezeit abgerufen.
 
 * im Allgemeinen ist der Code vermutlich unglaublich unelegant. Mein Wissen über C++ beschränkt sich auf "das ist im Prinzip so ähnlich wie Java (dassen Wissen sich wiederum auf 1 Jahr Schule beschränkt)" und Codeschnipseln aus dem Internet. Verbesserungsvorschläge willkommen.
 
 ## Lizenz
-habe ich mich noch nicht mit beschäftigt. Einige der Libraries stehen unter GNU GPL, glaube ich. Bitte entsprechend beachten.
+habe ich mich noch nicht mit beschäftigt. Einige der Libraries stehen unter GNU GPL. Bitte entsprechend beachten.
