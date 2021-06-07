@@ -80,15 +80,15 @@ void loop() {
   displayLCD();
   // delay(60000);
   Serial.println("Darstellung abgeschlossen. Warte auf Webanfrage...");
-  if (wait15ForWebRequest()) {
+  if (wait20ForWebRequest()) {
     return;
   }
   displayLCD2();
-  if (wait15ForWebRequest()) {
+  if (wait20ForWebRequest()) {
     return;
   }
   displayLCD1();
-  if (wait15ForWebRequest()) {
+  if (wait20ForWebRequest()) {
     return;
   }
   displayLCD2();
@@ -239,7 +239,7 @@ void displayLCD2() {
       if (doc["departures"][d]["train"].as<String>().indexOf("R") > 0) {
         l =  doc["departures"][d]["train"].as<String>().indexOf(" ");
         disp.setCursor(0, d); disp.print("    "); disp.setCursor(0, d);
-        disp.print(doc["departures"][d]["train"].as<String>().substring(l + 1, 5));
+        disp.print(doc["departures"][d]["train"].as<String>().substring(l + 1, l + 5));
       }
     }
   }
@@ -359,14 +359,14 @@ int currentTimeInMin() {
   return mins;
 }
 
-bool wait15ForWebRequest() {
+bool wait20ForWebRequest() {
 
   WiFiClient client ;
   int s = 0;
-  for (s; s < 15; s++) {
+  for (s; s < 20; s++) {
     client = server.available();
     while (!client) {
-      if (s > 15) {
+      if (s > 20) {
         return 0;
       }
       s++;
