@@ -60,12 +60,12 @@ void setup() {
   SD.begin(15);
   server.begin();
 
-  station = "";
-  stationF = SD.open("station.txt");
-  while (stationF.available()) {
-    station += (char)stationF.read();
-  }
-  stationF.close();
+  station = "Frankfurt(Main)Hbf";
+  /**  stationF = SD.open("station.txt");
+    while (stationF.available()) {
+      station += (char)stationF.read();
+    }
+    stationF.close();*/
 }
 
 void loop() {
@@ -76,13 +76,25 @@ void loop() {
   Serial.println("");
   loopCount++; Serial.print("Loop-Count: "); Serial.println(loopCount);
   Serial.println(station);
-  displayLCD(dlParse());
+  dlParse();
+  displayLCD();
   // delay(60000);
   Serial.println("Darstellung abgeschlossen. Warte auf Webanfrage...");
-  waitForWebRequest();
+  if (wait15ForWebRequest()) {
+    return;
+  }
+  displayLCD2();
+  if (wait15ForWebRequest()) {
+    return;
+  }
+  displayLCD1();
+  if (wait15ForWebRequest()) {
+    return;
+  }
+  displayLCD2();
 }
 
-DynamicJsonDocument dlParse() {
+void dlParse() {
   String payload;
   char dbfHost[110];
   char* dbfHost1 = "https://dbf.finalrewind.org/";
@@ -122,17 +134,9 @@ DynamicJsonDocument dlParse() {
     }
   }
 
-  dbf = SD.open("dbf.json");
-  // Allocate JsonBuffer
-  // Use arduinojson.org/assistant to compute the capacity.
-  const size_t capacity = 12288;
-  DynamicJsonDocument doc(capacity);
 
-  // Parse JSON object
-  DeserializationError err = deserializeJson(doc, dbf);
-  Serial.println(err.c_str());
 
-  return doc;
+  return;
 }
 
 void connectWiFi() {
@@ -156,7 +160,7 @@ void connectWiFi() {
   disp.setCursor(0, 3); disp.print("dbf.finalrewind.org");
 }
 
-void displayLCD(DynamicJsonDocument doc) { //LCD-Anzeige aufbauen
+void displayLCD() { //LCD-Anzeige aufbauen
 
   /*Serial.println(doc["departures"][0]["train"]["name"].as<char*>());
     Serial.println(doc["departures"][0]["train"].as<char*>());
@@ -165,21 +169,37 @@ void displayLCD(DynamicJsonDocument doc) { //LCD-Anzeige aufbauen
     Serial.print(doc["departures"][0]["destination"].as<char*>());
     Serial.print(" xx ");
     Serial.print( doc["departures"][0]["scheduledDeparture"].as<char*>());*/
+  Serial.println("vor dem LCD1 json abruf");
+  dbf = SD.open("dbf.json");
+  // Allocate JsonBuffer
+  // Use arduinojson.org/assistant to compute the capacity.
+  const size_t capacity = 12288;
+  DynamicJsonDocument doc(capacity);
 
-
+  // Parse JSON object
+  DeserializationError err = deserializeJson(doc, dbf);
+  Serial.println(err.c_str());
+  Serial.println("nach dem LCD1 json abruf");
   disp.clear();
   disp.backlight();
   int j = 0;
   int d = 0;
+  int l = 0;
   int time = currentTimeInMin();
   while ( d < 4) {
-    if (doc["departures"][j]["destination"].as<String>() == station) {
-      j++;
-      continue;
-    }
+    /* if (doc["departures"][j]["destination"].as<String>() == station) {
+       j++;
+       continue;
+      }*/
 
     disp.setCursor(0, d);
-    disp.print(shortenTrain(doc["departures"][j]["train"].as<char*>()));        //TODO Überstehende Zugnummern verarbeiten
+    if (doc["departures"][d]["trainClasses"][0].as<String>() == "D" | doc["departures"][d]["trainClasses"].as<String>() == "[]") {
+      l =  doc["departures"][d]["train"].as<String>().indexOf(" ");
+      disp.setCursor(0, d);
+      disp.print(doc["departures"][d]["train"].as<String>().substring(0, l));
+    } else {
+      disp.print(shortenTrain(doc["departures"][j]["train"].as<char*>()));        //TODO Überstehende Zugnummern verarbeiten
+    }
     disp.setCursor(4, d);
     disp.print(shortenDest(doc["departures"][j]["destination"].as<char*>(), 13));
     disp.setCursor(17, d);
@@ -200,6 +220,62 @@ void displayLCD(DynamicJsonDocument doc) { //LCD-Anzeige aufbauen
     d++;
   }
 }
+void displayLCD2() {
+  int d = 0;
+  int l = 0;
+  dbf = SD.open("dbf.json");
+  Serial.println("lcd2 -- datei geöffnet");
+  // Allocate JsonBuffer
+  // Use arduinojson.org/assistant to compute the capacity.
+  const size_t capacity = 12288;
+  DynamicJsonDocument doc(capacity);
+
+  // Parse JSON object
+  DeserializationError err = deserializeJson(doc, dbf);
+  Serial.println(err.c_str());
+  Serial.println("lcd2- json geladen");
+  for (d; d < 4; d++) {
+    if (doc["departures"][d]["trainClasses"][0].as<String>() == "D" | doc["departures"][d]["trainClasses"].as<String>() == "[]") {
+      if (doc["departures"][d]["train"].as<String>().indexOf("R") > 0) {
+        l =  doc["departures"][d]["train"].as<String>().indexOf(" ");
+        disp.setCursor(0, d); disp.print("    "); disp.setCursor(0, d);
+        disp.print(doc["departures"][d]["train"].as<String>().substring(l + 1, 5));
+      }
+    }
+  }
+}
+
+void displayLCD1() { //LCD-Anzeige aufbauen
+
+  Serial.println("vor dem LCD1 json abruf");
+  dbf = SD.open("dbf.json");
+  // Allocate JsonBuffer
+  // Use arduinojson.org/assistant to compute the capacity.
+  const size_t capacity = 12288;
+  DynamicJsonDocument doc(capacity);
+
+  // Parse JSON object
+  DeserializationError err = deserializeJson(doc, dbf);
+  Serial.println(err.c_str());
+  Serial.println("nach dem LCD1 json abruf");
+
+
+  int j = 0;
+  int d = 0;
+  int l = 0;
+  int time = currentTimeInMin();
+  for (d; d < 4; d++) {
+
+
+    disp.setCursor(0, d);
+    if (doc["departures"][d]["trainClasses"][0].as<String>() == "D" | doc["departures"][d]["trainClasses"].as<String>() == "[]") {
+      l =  doc["departures"][d]["train"].as<String>().indexOf(" ");
+      disp.setCursor(0, d); disp.print("    "); disp.setCursor(0, d);
+      disp.print(doc["departures"][d]["train"].as<String>().substring(0, l));
+    }
+  }
+}
+
 
 String shortenDest(String input, int mgl) { //Bahnhofsnamen kürzen
   char ipt[30];
@@ -283,14 +359,15 @@ int currentTimeInMin() {
   return mins;
 }
 
-void waitForWebRequest() {
+bool wait15ForWebRequest() {
+
   WiFiClient client ;
   int s = 0;
-  for (s; s < 55; s++) {
+  for (s; s < 15; s++) {
     client = server.available();
     while (!client) {
-      if (s > 55) {
-        return;
+      if (s > 15) {
+        return 0;
       }
       s++;
       delay(1000);
@@ -312,13 +389,13 @@ void waitForWebRequest() {
     //  boolean newReq = server.handleClient();
     if (newReq == 1) {
       Serial.println("got request, restarting loop");
-      return;
+      return 1;
     }
     s++;
     delay(2000);
     Serial.print(s); Serial.println("..delayed 2000");
   }
-  return;
+  return 0;
 }
 
 
@@ -351,7 +428,7 @@ bool handleRequest(String request) { /* function handleRequest */
     } else {
       bhf = request.substring(request.indexOf("bahnhof=") + 8, request.indexOf("&mode"));
       bhf.toCharArray(station, bhf.length() + 1);
-      disp.setCursor(0, 3); disp.print(station); disp.print("  ");
+      disp.setCursor(0, 3);  disp.print("   "); disp.print(station); disp.print("      ");
       ret = 1;
       SD.remove("station.txt");
       stationF = SD.open("station.txt", FILE_WRITE);
